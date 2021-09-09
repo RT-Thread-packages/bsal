@@ -7,7 +7,7 @@
  * Date           Author       Notes
  * 2021-09-09     WaterFishJ   the first version
  */
- 
+
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <rthw.h>
@@ -27,18 +27,18 @@
 /* {6E400001-B5A3-F393-E0A9-E50E24DCCA9E} */
 static const struct bsal_uuid128 gatt_svr_svc_uart_uuid =
     BSAL_UUID128_INIT(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                     0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e);
+                      0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e);
 
 /* {6E400002-B5A3-F393-E0A9-E50E24DCCA9E} */
 static const struct bsal_uuid128 gatt_svr_chr_uart_write_uuid =
     BSAL_UUID128_INIT(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                     0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e);
+                      0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e);
 
 
 /* {6E400003-B5A3-F393-E0A9-E50E24DCCA9E} */
 static const struct bsal_uuid128 gatt_svr_chr_uart_read_uuid =
     BSAL_UUID128_INIT(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                     0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e);
+                      0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e);
 
 /* Pointer to a console buffer */
 static rt_uint8_t *console_buf;
@@ -55,28 +55,28 @@ static struct bleuart_console bleuart = {0};
 static P_SRV_GENERAL_CB pfn_bas_cb = NULL;
 static void profile_callback(void *p)
 {
-		bsal_callbak_data_t *p_param = (bsal_callbak_data_t *)p;
+    bsal_callbak_data_t *p_param = (bsal_callbak_data_t *)p;
     bool is_app_cb = false;
-		
-		rt_kprintf("type = %d\n", p_param->msg_type);
-		rt_kprintf("profile callback u_type: %d\n", p_param->srv_uuid.u_type);
-	
-		if (p_param->msg_type == BSAL_CALLBACK_TYPE_READ_CHAR_VALUE)
+
+    rt_kprintf("type = %d\n", p_param->msg_type);
+    rt_kprintf("profile callback u_type: %d\n", p_param->srv_uuid.u_type);
+
+    if (p_param->msg_type == BSAL_CALLBACK_TYPE_READ_CHAR_VALUE)
     {
         //NO DEAL had not finished
 //				rt_kprintf("read_index = %d\n", p_param->off_handle);
-				is_app_cb = true;
+        is_app_cb = true;
     }
     else if (p_param->msg_type == BSAL_CALLBACK_TYPE_WRITE_CHAR_VALUE)
     {
-				if (GATT_SVC_NUS_WRITE_INDEX == p_param->off_handle)
+        if (GATT_SVC_NUS_WRITE_INDEX == p_param->off_handle)
         {
-						is_app_cb = true;
-						rt_device_write(rt_console_get_device(), 0, (char *)p_param->data, p_param->length);
-						rt_device_write(rt_console_get_device(), 0, "\n", 1);
-				}
-		}
-		else if (p_param->msg_type == BSAL_CALLBACK_TYPE_INDIFICATION_NOTIFICATION)
+            is_app_cb = true;
+            rt_device_write(rt_console_get_device(), 0, (char *)p_param->data, p_param->length);
+            rt_device_write(rt_console_get_device(), 0, "\n", 1);
+        }
+    }
+    else if (p_param->msg_type == BSAL_CALLBACK_TYPE_INDIFICATION_NOTIFICATION)
     {
 //				rt_kprintf("CCCD off_handle = %d\n", p_param->off_handle);
         if (GATT_SVC_NUS_CHAR_CCCD_INDEX == p_param->off_handle)
@@ -88,7 +88,7 @@ static void profile_callback(void *p)
             }
         }
     }
-		if (is_app_cb && (pfn_bas_cb != NULL))
+    if (is_app_cb && (pfn_bas_cb != NULL))
     {
         pfn_bas_cb(p_param);
     }
@@ -102,27 +102,27 @@ void bsal_le_uart_svr_init(void *stack_ptr, void *app_callback)
             /*** Uart Service. */
             .type = BSAL_GATT_UUID_PRIMARY_SERVICE,
             .uuid = BSAL_UUID128_DECLARE(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                     0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e),//(bsal_uuid_any_t *)&battery_srv,//BSAL_UUID16_DECLARE(GATT_UUID_BATTERY),
+                                         0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e),//(bsal_uuid_any_t *)&battery_srv,//BSAL_UUID16_DECLARE(GATT_UUID_BATTERY),
             .characteristics = (bsal_gatt_chr_def_t[])
             {
                 {
                     /*** Uart read characteristic */
                     .uuid = BSAL_UUID128_DECLARE(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                     0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e),//(bsal_uuid_any_t *)&bas_char_bas_level,//BSAL_UUID16_DECLARE(GATT_UUID_CHAR_BAS_LEVEL),
+                                                 0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e),//(bsal_uuid_any_t *)&bas_char_bas_level,//BSAL_UUID16_DECLARE(GATT_UUID_CHAR_BAS_LEVEL),
                     .properties = BSAL_ATT_P_NOTIFY,
                     .permission = BSAL_GATT_PERM_READ_NONE,
                     .value_length = 1,
                 },
-								{
-										/*** Uart write characteristic */
-										.uuid = BSAL_UUID128_DECLARE(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                     0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e),//(bsal_uuid_any_t *)&bas_char_bas_level,//BSAL_UUID16_DECLARE(GATT_UUID_CHAR_BAS_LEVEL),
+                {
+                    /*** Uart write characteristic */
+                    .uuid = BSAL_UUID128_DECLARE(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
+                                                 0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e),//(bsal_uuid_any_t *)&bas_char_bas_level,//BSAL_UUID16_DECLARE(GATT_UUID_CHAR_BAS_LEVEL),
                     .properties = BSAL_ATT_P_WRITE
                     | BSAL_ATT_P_WRITE_WITHOUT_RESPONSE
                     ,
                     .permission = BSAL_GATT_PERM_WRITE_NONE,
                     .value_length = 1,
-								},
+                },
                 {
                     0, /* No more characteristics in this service. */
                 }
@@ -202,10 +202,10 @@ void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
     int off = 0;
     char ch;
     struct os_mbuf *om;
-	
-		bsal_uuid_any_t uuid_srv;
+
+    bsal_uuid_any_t uuid_srv;
     uuid_srv.u_type = BSAL_UUID_TYPE_128BIT;
-		rt_memcpy(uuid_srv.u128.value, gatt_svr_chr_uart_read_uuid.value, 16);
+    rt_memcpy(uuid_srv.u128.value, gatt_svr_chr_uart_read_uuid.value, 16);
 //    uuid_srv.u128.value = ;
     uint16_t start_handle = bsal_srv_get_start_handle(stack_ptr, uuid_srv);
 
@@ -224,7 +224,7 @@ void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
                     console_buf[off--] = 0;
                     rt_kprintf("\b \b");
                 }
-								continue;
+                continue;
             }
             else
             {
@@ -232,14 +232,14 @@ void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
                 rt_kprintf("%c", ch);
                 continue;
             }
-        }    
+        }
 
         console_buf[off] = '\0';
         rt_kprintf("\n");
 //				rt_kprintf("send connid = %d\n", conn_id);
 //				rt_kprintf("send start_handle = %d\n", start_handle);
 //				bsal_srv_write_data(p_param->stack_ptr, p_param->start_handle, p_param->off_handle, sizeof(console_buf), console_buf);
-				bsal_srv_send_notify_data(stack_ptr, conn_id, start_handle, GATT_SVC_NUS_READ_INDEX, sizeof(console_buf), console_buf);
+        bsal_srv_send_notify_data(stack_ptr, conn_id, start_handle, GATT_SVC_NUS_READ_INDEX, sizeof(console_buf), console_buf);
 //        om = ble_hs_mbuf_from_flat(console_buf, off);
 //        if (!om) {
 //            return;
