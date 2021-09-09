@@ -69,8 +69,6 @@ static void bsal_app_all_callback(void *stack_ptr, uint8_t cb_layer, uint16_t cb
         if (cb_sub_event == BSAL_CB_STACK_READY)
         {
             //stack ready
-            //   APP_PRINT_INFO0("GAP stack ready");
-
         }
 
         break;
@@ -152,7 +150,7 @@ static void bsal_app_profile_callback(void *p)
     }
     else if (bsal_param->msg_type == BSAL_CALLBACK_TYPE_WRITE_CHAR_VALUE)
     {
-//        bsal_osif_printf_info("\r\n BSAL: THE DATA IS :%s\r\n", bsal_param->data);
+        bsal_osif_printf_info("\r\n BSAL: THE DATA IS :%s\r\n", bsal_param->data);
     }
 }
 
@@ -186,7 +184,7 @@ int bsal_nus_app(void)
     //5. srv_end
     bsal_stack_le_srv_end(stack_ptr);    //end srv add
 
-    //start stack
+    //6. start stack
     bsal_stack_startup(stack_ptr);    //start she
 
     bsal_bleuart_init(stack_ptr, bsal_app_conn_handle);

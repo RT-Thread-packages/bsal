@@ -281,7 +281,6 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
         {
             ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
             tmp_uuid->u.type = BLE_UUID_TYPE_128;
-            //tmp_uuid->value = tmp_srv->uuid->u16.value;
             memcpy(tmp_uuid->value, tmp_srv->uuid->u128.value,16);
             nimble_srvs->uuid = &tmp_uuid->u;
         }
@@ -324,7 +323,6 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
                 {
                     ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
                     tmp_uuid->u.type = BLE_UUID_TYPE_128;
-                    //tmp_uuid->value = tmp_srv->uuid->u16.value;
                     memcpy(tmp_uuid->value, tmp_srv->characteristics[x].uuid->u128.value,16);
                     nimble_chrs[x].uuid = &tmp_uuid->u;
                 }
