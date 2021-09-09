@@ -24,6 +24,12 @@ if GetDepend(['PKG_BSAL_SRV_BLUFI']):
 	src += Split("""
 		profiles/service/bsal_blufi/bsal_srv_blufi.c
 		""")
+
+if GetDepend(['PKG_BSAL_SRV_NUS']):
+	path += [cwd + '/profiles/service/bsal_uart']
+	src += Split("""
+		profiles/service/bsal_uart/bsal_srv_uart.c
+		""")
 		
 if GetDepend(['PKG_BSAL_SAMPLE_BAS_ONLY']):
 	src += Split("""
@@ -32,6 +38,10 @@ if GetDepend(['PKG_BSAL_SAMPLE_BAS_ONLY']):
 elif GetDepend(['PKG_BSAL_SAMPLE_BAS_BLUFI_COMBINE']):
     src += Split("""
 		samples/ble_bas_blufi_app.c
+		""")
+elif GetDepend(['PKG_BSAL_SAMPLE_NUS_ONLY']):
+    src += Split("""
+		samples/ble_nus_app.c
 		""")
 
 		
