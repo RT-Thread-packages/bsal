@@ -279,7 +279,11 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
         }
         else if (tmp_srv->characteristics[x].uuid->u_type == BSAL_UUID_TYPE_128BIT)
         {
-
+            ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
+            tmp_uuid->u.type = BLE_UUID_TYPE_128;
+            //tmp_uuid->value = tmp_srv->uuid->u16.value;
+            memcpy(tmp_uuid->value, tmp_srv->uuid->u128.value,16);
+            nimble_srvs->uuid = &tmp_uuid->u;
         }
         write_index++;
         //add include=============================================================
@@ -318,7 +322,11 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
                 }
                 else if (tmp_srv->characteristics[x].uuid->u_type == BSAL_UUID_TYPE_128BIT)
                 {
-
+                    ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
+                    tmp_uuid->u.type = BLE_UUID_TYPE_128;
+                    //tmp_uuid->value = tmp_srv->uuid->u16.value;
+                    memcpy(tmp_uuid->value, tmp_srv->characteristics[x].uuid->u128.value,16);
+                    nimble_chrs[x].uuid = &tmp_uuid->u;
                 }
                 nimble_chrs[x].access_cb = bsal_ble_svc_bas_access;
                 nimble_chrs[x].arg = bsal_get_local_stack_obj();

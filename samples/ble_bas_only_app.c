@@ -29,7 +29,7 @@ uint16_t battery_start_handle = 0;
 void bsa_app_set_adv_data(void *stack_ptr)
 {
     uint8_t tmp_data[32] = {0} ; //must be zero
-    bsal_le_adv_data_add_flag(tmp_data, BSAL_GAP_ADTYPE_FLAGS_LIMITED | BSAL_GAP_ADTYPE_FLAGS_BREDR_NOT_SUPPORTED);
+    bsal_le_adv_data_add_flag(tmp_data, BSAL_GAP_ADTYPE_FLAGS_BREDR_NOT_SUPPORTED);
 
     char *adv_name = (char *)bsal_get_device_name(stack_ptr);
     bsal_adv_data_add_name(tmp_data, strlen(adv_name), adv_name);

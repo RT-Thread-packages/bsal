@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2020, RT-Thread Development Team
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,9 +16,9 @@
 #include "bsal.h"
 
 
-#define GATT_SVC_NUS_READ_INDEX				2
-#define GATT_SVC_NUS_WRITE_INDEX			5
-#define GATT_SVC_NUS_CHAR_CCCD_INDEX	3
+#define GATT_SVC_NUS_READ_INDEX             2
+#define GATT_SVC_NUS_WRITE_INDEX            5
+#define GATT_SVC_NUS_CHAR_CCCD_INDEX    3
 
 
 
