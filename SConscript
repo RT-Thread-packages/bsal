@@ -65,8 +65,10 @@ elif GetDepend(['PKG_BSAL_EMPTY_STACK']):
 		port/empty_stack/bsal_osal_empty.c
 		port/empty_stack/bsal_stack_empty.c
 		""")
-	
-LOCAL_CCFLAGS = ''
+		
+if rtconfig.CROSS_TOOL == 'keil':
+    LOCAL_CCFLAGS = ' --gnu'
+
     
 group = DefineGroup('bsal', src, depend = ['PKG_USING_BSAL'], CPPPATH = path, LOCAL_CCFLAGS = LOCAL_CCFLAGS)
 
