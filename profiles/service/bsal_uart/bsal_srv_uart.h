@@ -6,6 +6,7 @@
  * Change Logs:
  * Date           Author       Notes
  * 2021-09-09     WaterFishJ   the first version
+ * 2021-09-22     WaterFishJ   fix the send bug
  */
 
 #ifndef __BSAL_SRV_UART_H__
@@ -22,7 +23,7 @@
 
 
 
-int bsal_bleuart_init(void *stack_ptr, uint16_t conn_id);
+int bsal_bleuart_init(void *stack_ptr, uint16_t *conn_id);
 
 void bsal_le_uart_svr_init(void *stack_ptr, void *app_callback);
 

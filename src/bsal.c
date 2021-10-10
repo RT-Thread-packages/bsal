@@ -361,9 +361,13 @@ uint16_t bsal_srv_get_start_handle(void *stack_ptr, bsal_uuid_any_t uuid)
     {
         return bsal_profile_get_start_handle_by_16_uuid(stack_ptr, uuid.u16.value);
     }
-    else
+    else if (uuid.u_type == 32)
     {
-        /* TODO deal with the 128 bit*/
+        return bsal_profile_get_start_handle_by_32_uuid(stack_ptr, uuid.u32.value);
+    }
+    else if (uuid.u_type == 128)
+    {
+        return bsal_profile_get_start_handle_by_128_uuid(stack_ptr, uuid.u128.value);
     }
     return 0;
 }
@@ -429,6 +433,49 @@ uint16_t bsal_profile_get_start_handle_by_16_uuid(void *stack_ptr, uint16_t uuid
         if ((p_bsal_stack->bsal_srv_objs[i].srv_uuid.u_type == 16) && (p_bsal_stack->bsal_srv_objs[i].srv_uuid.u16.value == uuid))
         {
             return p_bsal_stack->bsal_srv_objs[i].start_handle;
+        }
+    }
+    return NULL;
+}
+
+
+uint16_t bsal_profile_get_start_handle_by_32_uuid(void *stack_ptr, uint32_t uuid)
+{
+    BSAL_ASSERT_PTR(stack_ptr);
+    uint8_t i = 0;
+    bsal_stack_obj_t *p_bsal_stack =  stack_ptr;
+    for (i = 0 ; i < p_bsal_stack->srv_num; i++)
+    {
+        if ((p_bsal_stack->bsal_srv_objs[i].srv_uuid.u_type == 32) && (p_bsal_stack->bsal_srv_objs[i].srv_uuid.u32.value == uuid))
+        {
+            return p_bsal_stack->bsal_srv_objs[i].start_handle;
+        }
+    }
+    return NULL;
+}
+
+
+uint16_t bsal_profile_get_start_handle_by_128_uuid(void *stack_ptr, uint8_t *uuid)
+{
+    BSAL_ASSERT_PTR(stack_ptr);
+    BSAL_ASSERT_PTR(uuid);
+    uint8_t i = 0, j = 0;
+    bsal_stack_obj_t *p_bsal_stack =  stack_ptr;
+    for (i = 0 ; i < p_bsal_stack->srv_num; i++)
+    {
+        if (p_bsal_stack->bsal_srv_objs[i].srv_uuid.u_type == 128)
+        {
+            for (j = 0; j < 16; j++)
+            {
+                if (p_bsal_stack->bsal_srv_objs[i].srv_uuid.u128.value[j] != uuid[j])
+                {
+                    break;
+                }
+            }
+            if (j == 16)
+            {
+                return p_bsal_stack->bsal_srv_objs[i].start_handle;
+            }
         }
     }
     return NULL;

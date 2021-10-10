@@ -1,18 +1,15 @@
 /*
- * Copyright (c) 2006-2020, RT-Thread Development Team
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
  * Date           Author       Notes
- * 2020-05-28     Supperthomas the first version
+ * 2021-09-27     WaterFishJ   the first version
  */
 
-
-
-
-#ifndef __BSAL_SRV_BLUFI_H__
-#define __BSAL_SRV_BLUFI_H__
+#ifndef __BSAL_SRV_DIS_H__
+#define __BSAL_SRV_DIS_H__
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -20,7 +17,17 @@ extern "C" {
 #include "stdint.h"
 #include "stdbool.h"
 
-void bsal_le_blufi_svr_init(void *stack_ptr, void *app_callback);
+#define GATT_UUID_DEVICE_INFORMATION               BSAL_GATT_SERVICE_DEVICE_INFORMATION
+#define GATT_UUID_CHAR_MANUFACTURER_NAME_STRING    BSAL_UUID_CHAR_MANUFACTURER_NAME_STRING
+#define GATT_UUID_CHAR_PNP_ID                      BSAL_UUID_CHAR_PNP_ID
+
+#define GATT_SVC_DIS_CHAR_MNS_INDEX                2
+#define GATT_SVC_DIS_CHAR_PNPID_INDEX              4
+
+
+void bsal_le_dis_svr_init(void *stack_ptr, void *app_callback);
+    
+
 #ifdef __cplusplus
 }
 #endif

@@ -275,14 +275,23 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
             ble_uuid16_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid16_t));
             tmp_uuid->u.type = BLE_UUID_TYPE_16;
             tmp_uuid->value = tmp_srv->uuid->u16.value;
-            nimble_srvs->uuid = &tmp_uuid->u;
+            //nimble_srvs->uuid = &tmp_uuid->u;
+            nimble_srvs[srv_idx].uuid = &tmp_uuid->u;
         }
+//        else if (tmp_srv->uuid->u_type  == BSAL_UUID_TYPE_128BIT)
+//        {
+//            ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
+//            tmp_uuid->u.type = BLE_UUID_TYPE_128;
+//            memcpy(tmp_uuid->value, tmp_srv->uuid->u128.value,16);
+//            nimble_srvs->uuid = &tmp_uuid->u;
+//        }
         else if (tmp_srv->characteristics[x].uuid->u_type == BSAL_UUID_TYPE_128BIT)
         {
             ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
             tmp_uuid->u.type = BLE_UUID_TYPE_128;
             memcpy(tmp_uuid->value, tmp_srv->uuid->u128.value,16);
-            nimble_srvs->uuid = &tmp_uuid->u;
+            //nimble_srvs->uuid = &tmp_uuid->u;
+            nimble_srvs[srv_idx].uuid = &tmp_uuid->u;
         }
         write_index++;
         //add include=============================================================
@@ -370,13 +379,27 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
                 write_index++;
             }
         }
+        srv_idx++;
     }
 
     for (i = 0; p_srv[i].type != 0; i++)
     {
         bsal_uuid_any_t srv_uuid;
-        srv_uuid.u_type = BSAL_UUID_TYPE_16BIT; //16bit
-        srv_uuid.u16.value = p_srv[i].uuid->u16.value;
+        switch (p_srv[i].uuid->u_type)
+        {
+            case BSAL_UUID_TYPE_16BIT:
+                srv_uuid.u_type = BSAL_UUID_TYPE_16BIT; //16bit
+                srv_uuid.u16.value = p_srv[i].uuid->u16.value;
+                break;
+            case BSAL_UUID_TYPE_32BIT:
+                srv_uuid.u_type = BSAL_UUID_TYPE_32BIT; //32bit
+                srv_uuid.u32.value = p_srv[i].uuid->u32.value;
+                break;
+            case BSAL_UUID_TYPE_128BIT:
+                srv_uuid.u_type = BSAL_UUID_TYPE_128BIT; //128bit
+                memcpy(srv_uuid.u128.value, p_srv[i].uuid->u128.value, 16);
+                break;
+        }
         tmp_srv = p_srv + i;
         p_bsal_stack->g_att_index++;
         bsal_profile_insert(bsal_get_local_stack_obj(), p_bsal_stack->g_att_index, p_func, srv_uuid);
