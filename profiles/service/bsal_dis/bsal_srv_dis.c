@@ -46,7 +46,7 @@ static void dis_profile_callback(void *p)
 
 void bsal_le_dis_svr_init(void *stack_ptr, void *app_callback)
 {
-    struct bsal_gatt_app_srv_def ble_svc_hid_defs[] =
+    struct bsal_gatt_app_srv_def ble_svc_dis_defs[] =
     {
         {
             /*** Device Information Service. */
@@ -77,6 +77,6 @@ void bsal_le_dis_svr_init(void *stack_ptr, void *app_callback)
             0, /* No more services. */
         },
     };
-    bsal_stack_le_srv_reg_func(stack_ptr, &ble_svc_hid_defs, (P_SRV_GENERAL_CB *)dis_profile_callback);
+    bsal_stack_le_srv_reg_func(stack_ptr, &ble_svc_dis_defs, (P_SRV_GENERAL_CB *)dis_profile_callback);
     pfn_bas_cb = (P_SRV_GENERAL_CB)app_callback;
 }
