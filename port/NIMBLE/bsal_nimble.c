@@ -278,13 +278,6 @@ static BSAL_STATUS bsal_int_srv_profile_reg_service(
             //nimble_srvs->uuid = &tmp_uuid->u;
             nimble_srvs[srv_idx].uuid = &tmp_uuid->u;
         }
-//        else if (tmp_srv->uuid->u_type  == BSAL_UUID_TYPE_128BIT)
-//        {
-//            ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
-//            tmp_uuid->u.type = BLE_UUID_TYPE_128;
-//            memcpy(tmp_uuid->value, tmp_srv->uuid->u128.value,16);
-//            nimble_srvs->uuid = &tmp_uuid->u;
-//        }
         else if (tmp_srv->characteristics[x].uuid->u_type == BSAL_UUID_TYPE_128BIT)
         {
             ble_uuid128_t *tmp_uuid = bsal_osif_malloc(sizeof(ble_uuid128_t));
