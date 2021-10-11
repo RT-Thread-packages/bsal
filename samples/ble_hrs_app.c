@@ -5,8 +5,7 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2021-09-09     WaterFishJ   the first version
- * 2021-09-22     WaterFishJ   fix the send bug
+ * 2021-09-10     WaterFishJ   the first version
  */
 
 
@@ -14,13 +13,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "bsal_osif.h"
-#include "bsal_srv_uart.h"
+#include "bsal_srv_hrs.h"
 
 #define BSAL_STACK_NAME PKG_BSAL_STACK_NAME
 
 static void *bsal_stack_ptr = NULL;
 static uint16_t bsal_app_conn_handle;
-rt_uint8_t gap_conn_state = BSAL_GAP_CONN_STATE_CONNECTED;
+static uint8_t heart_rate_flag = 0;
+static rt_uint8_t gap_conn_state = BSAL_GAP_CONN_STATE_CONNECTED;
 
 static void bsa_app_set_adv_data(void *stack_ptr)
 {
@@ -58,6 +58,7 @@ static void bsal_app_all_callback(void *stack_ptr, uint8_t cb_layer, uint16_t cb
             else if (bsal_gap_msg_data->gap_conn_state_change.new_state == BSAL_GAP_CONN_STATE_DISCONNECTED)
             {
                 bsal_stack_start_adv(stack_ptr);
+                heart_rate_flag = 0;
             }
             bsal_osif_printf_info("BSAL: conn_id %d old_state %d new_state %d, disc_cause 0x%x",
                                   bsal_gap_msg_data->gap_conn_state_change.conn_id, gap_conn_state, bsal_gap_msg_data->gap_conn_state_change.new_state, bsal_gap_msg_data->gap_conn_state_change.disc_cause);
@@ -96,29 +97,6 @@ static void bsal_app_all_callback(void *stack_ptr, uint8_t cb_layer, uint16_t cb
 
 }
 
-bool nus_is_uuid(bsal_uuid_any_t *s, bsal_uuid_any_t *u)
-{
-    if (s->u_type == u->u_type)
-    {
-        switch (s->u_type)
-        {
-        case BSAL_UUID_TYPE_128BIT:
-            for (rt_uint8_t i = 0; i < 16; i++)
-            {
-                if (s->u128.value[i] != u->u128.value[i])   return false;
-            }
-            return true;
-        case BSAL_UUID_TYPE_16BIT:
-            break;
-        case BSAL_UUID_TYPE_32BIT:
-            break;
-        default:
-            return false;
-        }
-    }
-    else    return false;
-}
-
 static void bsal_app_profile_callback(void *p)
 {
     bsal_callbak_data_t *bsal_param = (bsal_callbak_data_t *)p;
@@ -131,16 +109,17 @@ static void bsal_app_profile_callback(void *p)
     {
         uint16_t  cccbits = bsal_param->value;
         bsal_osif_printf_info("======callback notify from %x===data cccd %x====%x=====\r\n", bsal_param->off_handle, cccbits, bsal_param->srv_uuid.u16.value);
-        if (nus_is_uuid(&(bsal_param->srv_uuid), BSAL_UUID128_DECLARE(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                        0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e)))//uart_uuid
+        if (bsal_param->srv_uuid.u16.value == GATT_UUID_HEART_RATE)//heart_rate_uuid
         {
             if (cccbits & BSAL_GATT_CCC_NOTIFY)
             {
                 bsal_osif_printf_info("=========NOTIFY ENABLE from %x===data cccd %x====%x=====\r\n", bsal_param->off_handle, cccbits, bsal_param->srv_uuid.u16.value);
+                heart_rate_flag = 1;
             }
             else
             {
                 bsal_osif_printf_info("========NOTIFY DISABLE from %x===data cccd %x====%x=====\r\n", bsal_param->off_handle, cccbits, bsal_param->srv_uuid.u16.value);
+                heart_rate_flag = 0;
             }
         }
     }
@@ -150,7 +129,33 @@ static void bsal_app_profile_callback(void *p)
     }
 }
 
-int bsal_nus_app(void)
+static void bsal_ble_loop(void *p_param)
+{
+    static uint8_t hrm[2];
+    hrm[0] = 0x06;
+
+    uint8_t heart_rate = 90;
+    while (1)
+    {
+        bsal_osif_delay(1000);
+        bsal_osif_printf_info("====hello world===%d=\r\n", heart_rate_flag);
+        if (heart_rate_flag == 1)
+        {
+            if (heart_rate <= 120)
+            {
+                heart_rate++;
+            }
+            else
+            {
+                heart_rate = 90;
+            }
+            hrm[1] = heart_rate;
+            bsal_hrs_send_notify_level(bsal_stack_ptr, bsal_app_conn_handle, hrm);
+        }
+    }
+}
+
+int bsal_hrs_app(void)
 {
     void *stack_ptr = bsal_find_stack_ptr(BSAL_STACK_NAME);
     if (stack_ptr == NULL)
@@ -160,12 +165,11 @@ int bsal_nus_app(void)
     }
     //set iocapability
 
-
     bsal_stack_ptr  = stack_ptr;
     //1. init stack
     bsal_stack_init(stack_ptr, bsal_app_all_callback);  // init param not start stack
     // set device name
-    char *device_name = "ble_rtt_uart";
+    char *device_name = "ble_rtt_hrs";
     bsal_set_device_name(stack_ptr, strlen(device_name), (uint8_t *)device_name);
     //2. bond type
     bsal_set_device_le_bond_type(stack_ptr, false, BSAL_NO_INPUT, BSAL_NO_OUTPUT, BSAL_GAP_AUTHEN_BIT_NO_BONDING, false);
@@ -173,24 +177,18 @@ int bsal_nus_app(void)
 
     //3. service begin
     bsal_stack_le_srv_begin(stack_ptr, 1, bsal_app_profile_callback);  //will add 1 service
-
-    //4. uart init
-    bsal_le_uart_svr_init(stack_ptr, bsal_app_profile_callback);
+    //4. bas_init
+    bsal_le_hrs_svr_init(stack_ptr, bsal_app_profile_callback); //add battery servcie
 
     //5. srv_end
     bsal_stack_le_srv_end(stack_ptr);    //end srv add
 
-    //6. start stack
+    //start stack
     bsal_stack_startup(stack_ptr);    //start she
 
-    bsal_bleuart_init(stack_ptr, &bsal_app_conn_handle);
+    bsal_ble_loop(stack_ptr);
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(bsal_nus_app, bsal_nus_app, "bluetoooth uart sample");
-
-
-
-
-
+MSH_CMD_EXPORT_ALIAS(bsal_hrs_app, bsal_hrs_app, "bluetoooth heart rate sample");
 

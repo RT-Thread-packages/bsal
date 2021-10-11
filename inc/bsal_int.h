@@ -172,6 +172,24 @@ typedef enum
 uint16_t bsal_profile_get_start_handle_by_16_uuid(void *stack_ptr, uint16_t uuid);
 
 /**
+* BSAL find the start handle by the uuid
+*
+* @param stack_ptr the point of the stack object
+* @param uuid the 32 bit of the uuid
+* @Note get the profile start handle by the uuid
+*/
+uint16_t bsal_profile_get_start_handle_by_32_uuid(void *stack_ptr, uint32_t uuid);
+
+/**
+* BSAL find the start handle by the uuid
+*
+* @param stack_ptr the point of the stack object
+* @param uuid the point of the 128 bit of the uuid
+* @Note get the profile start handle by the uuid
+*/
+uint16_t bsal_profile_get_start_handle_by_128_uuid(void *stack_ptr, uint8_t *uuid);
+
+/**
 * BSAL get the profile entry by the start handle
 *
 * @param stack_ptr the point of the stack object

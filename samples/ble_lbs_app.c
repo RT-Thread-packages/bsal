@@ -5,22 +5,22 @@
  *
  * Change Logs:
  * Date           Author       Notes
- * 2021-09-09     WaterFishJ   the first version
- * 2021-09-22     WaterFishJ   fix the send bug
+ * 2021-09-27     WaterFishJ   the first version
  */
-
 
 #include "bsal.h"
 #include <stdio.h>
 #include <string.h>
 #include "bsal_osif.h"
-#include "bsal_srv_uart.h"
+#include "bsal_srv_lbs.h"
+
 
 #define BSAL_STACK_NAME PKG_BSAL_STACK_NAME
 
 static void *bsal_stack_ptr = NULL;
 static uint16_t bsal_app_conn_handle;
-rt_uint8_t gap_conn_state = BSAL_GAP_CONN_STATE_CONNECTED;
+static rt_uint8_t gap_conn_state = BSAL_GAP_CONN_STATE_CONNECTED;
+static rt_uint8_t button_cccd_flag;
 
 static void bsa_app_set_adv_data(void *stack_ptr)
 {
@@ -96,7 +96,7 @@ static void bsal_app_all_callback(void *stack_ptr, uint8_t cb_layer, uint16_t cb
 
 }
 
-bool nus_is_uuid(bsal_uuid_any_t *s, bsal_uuid_any_t *u)
+bool lbs_is_uuid(bsal_uuid_any_t *s, bsal_uuid_any_t *u)
 {
     if (s->u_type == u->u_type)
     {
@@ -131,8 +131,8 @@ static void bsal_app_profile_callback(void *p)
     {
         uint16_t  cccbits = bsal_param->value;
         bsal_osif_printf_info("======callback notify from %x===data cccd %x====%x=====\r\n", bsal_param->off_handle, cccbits, bsal_param->srv_uuid.u16.value);
-        if (nus_is_uuid(&(bsal_param->srv_uuid), BSAL_UUID128_DECLARE(0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-                        0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e)))//uart_uuid
+        if (lbs_is_uuid(&(bsal_param->srv_uuid), BSAL_UUID128_DECLARE(0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x15,
+                      0xDE, 0xEF, 0x12, 0x12, 0x23, 0x15, 0x00, 0x00)))//lbs_uuid
         {
             if (cccbits & BSAL_GATT_CCC_NOTIFY)
             {
@@ -150,8 +150,40 @@ static void bsal_app_profile_callback(void *p)
     }
 }
 
-int bsal_nus_app(void)
+rt_sem_t button_sem = 0;
+void button_irq(void *p)
 {
+    rt_sem_release(p);
+}
+
+void bsal_lbs_loop(void *p)
+{
+    button_sem = rt_sem_create("button", 0, RT_IPC_FLAG_FIFO);
+    
+    rt_pin_mode(BUTTON_PIN, PIN_MODE_INPUT_PULLUP);
+    rt_pin_attach_irq(BUTTON_PIN, PIN_IRQ_MODE_RISING_FALLING, button_irq, button_sem);
+    rt_pin_irq_enable(BUTTON_PIN, PIN_IRQ_ENABLE);
+    
+    rt_pin_mode(LED_PIN, PIN_MODE_OUTPUT);
+    rt_pin_write(LED_PIN, PIN_HIGH);
+    
+    uint8_t flag = 0;
+    
+    while (1)
+    {
+        rt_sem_take(button_sem, RT_WAITING_FOREVER);
+        if (button_cccd_flag)
+        {
+            flag = !rt_pin_read(BUTTON_PIN);
+            bsal_lbs_send_notify_button(p, bsal_app_conn_handle, flag);
+        }
+    }
+}
+
+int bsal_lbs_app(void)
+{   
+    void *bsal_test_app_task = RT_NULL;
+    
     void *stack_ptr = bsal_find_stack_ptr(BSAL_STACK_NAME);
     if (stack_ptr == NULL)
     {
@@ -160,12 +192,11 @@ int bsal_nus_app(void)
     }
     //set iocapability
 
-
-    bsal_stack_ptr  = stack_ptr;
+    bsal_stack_ptr = stack_ptr;
     //1. init stack
     bsal_stack_init(stack_ptr, bsal_app_all_callback);  // init param not start stack
     // set device name
-    char *device_name = "ble_rtt_uart";
+    char *device_name = "ble_rtt_lbs";
     bsal_set_device_name(stack_ptr, strlen(device_name), (uint8_t *)device_name);
     //2. bond type
     bsal_set_device_le_bond_type(stack_ptr, false, BSAL_NO_INPUT, BSAL_NO_OUTPUT, BSAL_GAP_AUTHEN_BIT_NO_BONDING, false);
@@ -174,20 +205,26 @@ int bsal_nus_app(void)
     //3. service begin
     bsal_stack_le_srv_begin(stack_ptr, 1, bsal_app_profile_callback);  //will add 1 service
 
-    //4. uart init
-    bsal_le_uart_svr_init(stack_ptr, bsal_app_profile_callback);
+    //4. lbs init
+    bsal_le_lbs_svr_init(stack_ptr, bsal_app_profile_callback, &button_cccd_flag);
 
     //5. srv_end
     bsal_stack_le_srv_end(stack_ptr);    //end srv add
 
     //6. start stack
     bsal_stack_startup(stack_ptr);    //start she
-
-    bsal_bleuart_init(stack_ptr, &bsal_app_conn_handle);
-
+    
+    bsal_test_app_task = rt_thread_create("lbs_task", bsal_lbs_loop, stack_ptr, 2 * 256, 5, 10);
+    if (bsal_test_app_task != RT_NULL)
+    {
+        rt_thread_startup(bsal_test_app_task);
+    }
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(bsal_nus_app, bsal_nus_app, "bluetoooth uart sample");
+MSH_CMD_EXPORT_ALIAS(bsal_lbs_app, bsal_lbs_app, "bluetoooth LED Button sample");
+
+
+
 
 
 

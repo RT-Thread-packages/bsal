@@ -6,6 +6,7 @@
  * Change Logs:
  * Date           Author       Notes
  * 2021-09-09     WaterFishJ   the first version
+ * 2021-09-22     WaterFishJ   fix the send bug
  */
 
 #include <rtthread.h>
@@ -58,9 +59,6 @@ static void profile_callback(void *p)
     bsal_callbak_data_t *p_param = (bsal_callbak_data_t *)p;
     bool is_app_cb = false;
 
-    rt_kprintf("type = %d\n", p_param->msg_type);
-    rt_kprintf("profile callback u_type: %d\n", p_param->srv_uuid.u_type);
-
     if (p_param->msg_type == BSAL_CALLBACK_TYPE_READ_CHAR_VALUE)
     {
         //NO DEAL had not finished
@@ -72,7 +70,6 @@ static void profile_callback(void *p)
         {
             is_app_cb = true;
             rt_device_write(rt_console_get_device(), 0, (char *)p_param->data, p_param->length);
-            rt_device_write(rt_console_get_device(), 0, "\n", 1);
         }
     }
     else if (p_param->msg_type == BSAL_CALLBACK_TYPE_INDIFICATION_NOTIFICATION)
@@ -194,7 +191,7 @@ void bsal_bleuart_deinit(void)
     }
 }
 
-void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
+void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t *conn_id)
 {
     int off = 0;
     char ch;
@@ -202,7 +199,7 @@ void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
 
     bsal_uuid_any_t uuid_srv;
     uuid_srv.u_type = BSAL_UUID_TYPE_128BIT;
-    rt_memcpy(uuid_srv.u128.value, gatt_svr_chr_uart_read_uuid.value, 16);
+    rt_memcpy(uuid_srv.u128.value, gatt_svr_svc_uart_uuid.value, 16);
     uint16_t start_handle = bsal_srv_get_start_handle(stack_ptr, uuid_srv);
 
     rt_kprintf("======== Welcome to enter bluetooth uart mode ========\n");
@@ -229,10 +226,9 @@ void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
                 continue;
             }
         }
-
         console_buf[off] = '\0';
         rt_kprintf("\n");
-        bsal_srv_send_notify_data(stack_ptr, conn_id, start_handle, GATT_SVC_NUS_READ_INDEX, sizeof(console_buf), console_buf);
+        bsal_srv_send_notify_data(stack_ptr, *conn_id, start_handle, GATT_SVC_NUS_READ_INDEX, off + 1, console_buf);
 
         off = 0;
     }
@@ -241,7 +237,7 @@ void bsal_bleuart_uart_proc(void *stack_ptr, uint16_t conn_id)
 }
 
 
-int bsal_bleuart_init(void *stack_ptr, uint16_t conn_id)
+int bsal_bleuart_init(void *stack_ptr, uint16_t *conn_id)
 {
     int rc;
     rt_base_t level;
